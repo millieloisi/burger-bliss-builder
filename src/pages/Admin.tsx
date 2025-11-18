@@ -51,7 +51,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Create, edit, and delete dishes from your menu
               </p>
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => navigate('/admin/dishes')}>
                 Manage Dishes
               </Button>
             </CardContent>
@@ -67,7 +67,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Track orders and update their status
               </p>
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => navigate('/admin/orders')}>
                 View Orders
               </Button>
             </CardContent>
@@ -83,7 +83,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Create and manage promotional coupons
               </p>
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => navigate('/admin/coupons')}>
                 Manage Coupons
               </Button>
             </CardContent>
@@ -99,7 +99,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Add and edit available ingredients
               </p>
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => navigate('/admin/ingredients')}>
                 Manage Ingredients
               </Button>
             </CardContent>
