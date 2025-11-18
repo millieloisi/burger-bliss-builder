@@ -12,6 +12,10 @@ import Menu from "./pages/Menu";
 import Order from "./pages/Order";
 import Orders from "./pages/Orders";
 import Admin from "./pages/Admin";
+import DishesManagement from "./pages/admin/DishesManagement";
+import OrdersManagement from "./pages/admin/OrdersManagement";
+import CouponsManagement from "./pages/admin/CouponsManagement";
+import IngredientsManagement from "./pages/admin/IngredientsManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +35,10 @@ const App = () => (
               <Route path="/order" element={<Order />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/dishes" element={<DishesManagement />} />
+              <Route path="/admin/orders" element={<OrdersManagement />} />
+              <Route path="/admin/coupons" element={<CouponsManagement />} />
+              <Route path="/admin/ingredients" element={<IngredientsManagement />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
