@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,13 +29,8 @@ const CouponsManagement = () => {
 
   const fetchCoupons = async () => {
     try {
-      const { data, error } = await supabase
-        .from('coupons')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCoupons(data || []);
+      const res = await api.get('/coupons');
+      setCoupons(res.data || []);
     } catch (error: any) {
       toast.error('Error loading coupons');
     } finally {
@@ -55,19 +50,10 @@ const CouponsManagement = () => {
       };
 
       if (editingCoupon) {
-        const { error } = await supabase
-          .from('coupons')
-          .update(couponData)
-          .eq('id', editingCoupon.id);
-
-        if (error) throw error;
+        await api.put(`/coupons/${editingCoupon.id}`, couponData);
         toast.success('Coupon updated successfully');
       } else {
-        const { error } = await supabase
-          .from('coupons')
-          .insert([couponData]);
-
-        if (error) throw error;
+        await api.post('/coupons', couponData);
         toast.success('Coupon created successfully');
       }
 
@@ -95,12 +81,7 @@ const CouponsManagement = () => {
     if (!confirm('Are you sure you want to delete this coupon?')) return;
 
     try {
-      const { error } = await supabase
-        .from('coupons')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await api.delete(`/coupons/${id}`);
       toast.success('Coupon deleted successfully');
       fetchCoupons();
     } catch (error: any) {
@@ -110,12 +91,7 @@ const CouponsManagement = () => {
 
   const toggleActive = async (id: number, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('coupons')
-        .update({ activo: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
+      await api.put(`/coupons/${id}`, { activo: !currentStatus });
       toast.success('Coupon status updated');
       fetchCoupons();
     } catch (error: any) {

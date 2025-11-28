@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { api, setAuthToken } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: any | null;
+  session: any | null;
   loading: boolean;
   isAdmin: boolean;
   signUp: (email: string, password: string, nombre: string, apellido: string) => Promise<void>;
@@ -17,103 +16,81 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [session, setSession] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          setTimeout(() => {
-            checkUserRole(session.user.id);
-          }, 0);
-        } else {
-          setIsAdmin(false);
-        }
+    // Initialize from stored token/user
+    const token = localStorage.getItem('bb_token');
+    const stored = localStorage.getItem('bb_user');
+    if (token) {
+      setAuthToken(token);
+      setSession({ token });
+      try {
+        const parsed = stored ? JSON.parse(stored) : null;
+        setUser(parsed);
+        setIsAdmin(!!parsed?.admin);
+      } catch (e) {
+        setUser(null);
       }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkUserRole(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
+    setLoading(false);
   }, []);
 
+  // checkUserRole no longer needed here because backend returns admin flag at login
   const checkUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    if (!error && data) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
+    // placeholder in case we want to fetch roles from backend
+    return;
   };
 
   const signUp = async (email: string, password: string, nombre: string, apellido: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            nombre,
-            apellido,
-          },
-        },
-      });
+      const res = await api.post('/auth/register', { email, password, nombre, apellido });
+      const { token, user } = res.data;
+      localStorage.setItem('bb_token', token);
+      localStorage.setItem('bb_user', JSON.stringify(user));
+      setAuthToken(token);
+      setSession({ token });
+      setUser(user);
+      setIsAdmin(!!user?.admin);
 
-      if (error) throw error;
-      
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error: any) {
-      toast.error(error.message || 'Error creating account');
+      toast.error(error.response?.data?.message || error.message || 'Error creating account');
       throw error;
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const res = await api.post('/auth/login', { email, password });
+      const { token, user } = res.data;
+      localStorage.setItem('bb_token', token);
+      localStorage.setItem('bb_user', JSON.stringify(user));
+      setAuthToken(token);
+      setSession({ token });
+      setUser(user);
+      setIsAdmin(!!user?.admin);
 
-      if (error) throw error;
-      
       toast.success('Signed in successfully!');
       navigate('/');
     } catch (error: any) {
-      toast.error(error.message || 'Error signing in');
+      toast.error(error.response?.data?.message || error.message || 'Error signing in');
       throw error;
     }
   };
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
+      localStorage.removeItem('bb_token');
+      localStorage.removeItem('bb_user');
+      setAuthToken(null);
+      setUser(null);
+      setSession(null);
       setIsAdmin(false);
       toast.success('Signed out successfully!');
       navigate('/');

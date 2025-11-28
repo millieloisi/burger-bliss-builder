@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,13 +33,8 @@ const DishesManagement = () => {
 
   const fetchDishes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('dishes')
-        .select('*')
-        .order('nombre');
-
-      if (error) throw error;
-      setDishes(data || []);
+      const res = await api.get('/platos');
+      setDishes(res.data || []);
     } catch (error: any) {
       toast.error('Error loading dishes');
     } finally {
@@ -62,17 +57,12 @@ const DishesManagement = () => {
       };
 
       if (editingDish) {
-        const { error } = await supabase
-          .from('dishes')
-          .update(dishData)
-          .eq('id', editingDish.id);
+        await api.put(`/platos/${editingDish.id}`, dishData);
 
         if (error) throw error;
         toast.success('Dish updated successfully');
       } else {
-        const { error } = await supabase
-          .from('dishes')
-          .insert([dishData]);
+        await api.post('/platos', dishData);
 
         if (error) throw error;
         toast.success('Dish created successfully');
@@ -105,10 +95,7 @@ const DishesManagement = () => {
     if (!confirm('Are you sure you want to delete this dish?')) return;
 
     try {
-      const { error } = await supabase
-        .from('dishes')
-        .delete()
-        .eq('id', id);
+      await api.delete(`/platos/${id}`);
 
       if (error) throw error;
       toast.success('Dish deleted successfully');

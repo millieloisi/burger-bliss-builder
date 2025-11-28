@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,20 +19,8 @@ const OrdersManagement = () => {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          profiles (nombre, apellido),
-          order_items (
-            *,
-            dishes (nombre)
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data || []);
+      const res = await api.get('/pedidos');
+      setOrders(res.data || []);
     } catch (error: any) {
       toast.error('Error loading orders');
     } finally {
@@ -42,12 +30,21 @@ const OrdersManagement = () => {
 
   const updateOrderStatus = async (orderId: number, newStatus: 'pendiente' | 'aceptado' | 'en_camino' | 'entregado') => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ estado: newStatus })
-        .eq('id', orderId);
+      let endpoint = '/pedidos';
+      switch (newStatus) {
+        case 'aceptado': endpoint = `/pedidos/${orderId}/aceptar`; break;
+        case 'en_camino': endpoint = `/pedidos/${orderId}/comenzar`; break;
+        case 'entregado': endpoint = `/pedidos/${orderId}/entregar`; break;
+        default: endpoint = `/pedidos/${orderId}`; break;
+      }
 
-      if (error) throw error;
+      if (newStatus === 'pendiente') {
+        // there's no explicit route to set back to pendiente, update fallback
+        await api.put(`/pedidos/${orderId}`, { estado: 'pendiente' });
+      } else {
+        await api.put(endpoint);
+      }
+
       toast.success('Order status updated');
       fetchOrders();
     } catch (error: any) {

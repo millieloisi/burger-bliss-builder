@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Navigation from '@/components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 
@@ -31,27 +31,15 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchOrders();
-    }
+    if (user) fetchOrders();
   }, [user]);
 
   const fetchOrders = async () => {
-    const { data, error } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        order_items (
-          cantidad,
-          precio_unitario,
-          dishes (nombre)
-        )
-      `)
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setOrders(data);
+    try {
+      const res = await api.get('/pedidos/usuario');
+      setOrders(res.data || []);
+    } catch (err) {
+      console.error(err);
     }
     setLoading(false);
   };

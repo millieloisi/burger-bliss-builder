@@ -4,7 +4,7 @@ import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -32,15 +32,12 @@ const Menu = () => {
   }, []);
 
   const fetchDishes = async () => {
-    const { data, error } = await supabase
-      .from('dishes')
-      .select('*')
-      .eq('disponible', true)
-      .order('tipo')
-      .order('nombre');
-
-    if (!error && data) {
-      setDishes(data);
+    try {
+      const res = await api.get('/platos');
+      const data = res.data;
+      setDishes(Array.isArray(data) ? data.filter((d: any) => d.disponible) : []);
+    } catch (err) {
+      console.error(err);
     }
     setLoading(false);
   };

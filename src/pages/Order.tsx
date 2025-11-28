@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
@@ -19,7 +19,6 @@ const Order = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const cart = location.state?.cart || [];
-
   const [orderType, setOrderType] = useState<'delivery' | 'takeaway' | 'dine_in'>('takeaway');
   const [tableNumber, setTableNumber] = useState('');
   const [address, setAddress] = useState('');
@@ -36,20 +35,18 @@ const Order = () => {
   const applyCoupon = async () => {
     if (!couponCode) return;
 
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('descuento_porcentaje')
-      .eq('codigo', couponCode)
-      .eq('activo', true)
-      .maybeSingle();
-
-    if (error || !data) {
+    try {
+      const res = await api.get(`/coupons/${encodeURIComponent(couponCode)}`);
+      const data = res.data;
+      if (!data || (data.descuento_porcentaje === undefined || data.descuento_porcentaje === null)) {
+        toast.error('Invalid coupon code');
+        return;
+      }
+      setDiscount(data.descuento_porcentaje);
+      toast.success(`Coupon applied! ${data.descuento_porcentaje}% discount`);
+    } catch (err) {
       toast.error('Invalid coupon code');
-      return;
     }
-
-    setDiscount(data.descuento_porcentaje);
-    toast.success(`Coupon applied! ${data.descuento_porcentaje}% discount`);
   };
 
   const placeOrder = async () => {
@@ -71,58 +68,24 @@ const Order = () => {
 
     setLoading(true);
     try {
-      // Generate order number
       const orderNum = Math.floor(1000 + Math.random() * 9000).toString();
-
-      // Generate QR code
       const qr = await QRCode.toDataURL(`ORDER-${orderNum}`);
 
-      // Get coupon ID if used
-      let cuponId = null;
-      if (couponCode) {
-        const { data } = await supabase
-          .from('coupons')
-          .select('id')
-          .eq('codigo', couponCode)
-          .maybeSingle();
-        cuponId = data?.id;
-      }
+      const platos = cart.map((item: any) => ({ id: item.dish.id, cantidad: item.quantity }));
+      const body: any = {
+        platos,
+        tipo_entrega: orderType,
+        numero_mesa: orderType === 'dine_in' ? parseInt(tableNumber) : null,
+        direccion_entrega: orderType === 'delivery' ? address : null,
+        qr_code: qr
+      };
+      if (couponCode) body.cupon_codigo = couponCode;
 
-      // Create order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          estado: 'pendiente',
-          tipo_entrega: orderType,
-          numero_mesa: orderType === 'dine_in' ? parseInt(tableNumber) : null,
-          direccion_entrega: orderType === 'delivery' ? address : null,
-          total,
-          cupon_id: cuponId,
-          numero_orden: orderNum,
-          qr_code: qr,
-        })
-        .select()
-        .single();
+      const res = await api.post('/pedidos', body);
+      const created = res.data;
 
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = cart.map((item: any) => ({
-        order_id: orderData.id,
-        dish_id: item.dish.id,
-        cantidad: item.quantity,
-        precio_unitario: item.dish.precio,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      setOrderNumber(orderNum);
-      setQrCode(qr);
+      setOrderNumber(created.numero_orden || orderNum);
+      setQrCode(created.qr_code || qr);
       setOrderSuccess(true);
       toast.success('Order placed successfully!');
     } catch (error: any) {
