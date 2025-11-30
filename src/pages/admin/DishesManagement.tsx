@@ -58,13 +58,9 @@ const DishesManagement = () => {
 
       if (editingDish) {
         await api.put(`/platos/${editingDish.id}`, dishData);
-
-        if (error) throw error;
         toast.success('Dish updated successfully');
       } else {
         await api.post('/platos', dishData);
-
-        if (error) throw error;
         toast.success('Dish created successfully');
       }
 
@@ -96,8 +92,6 @@ const DishesManagement = () => {
 
     try {
       await api.delete(`/platos/${id}`);
-
-      if (error) throw error;
       toast.success('Dish deleted successfully');
       fetchDishes();
     } catch (error: any) {
