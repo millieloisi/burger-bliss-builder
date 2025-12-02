@@ -1,81 +1,71 @@
-# Burger Bliss Backend (Sequelize)
+# PROMPT 1 EN LOVABLE
 
-This backend implements the SQL schema provided (supabase migrations) using Sequelize, an Express REST API, migrations and seeders.
+(LE ADJUNTAMOS LOS 2 ARCHIVOS DE LA CONSIGNA) Realizar estas consignas sobre una página web de una cadena de hamburguesas americanas. Que se puedan personalizar las hamburguesas, que se puedan añadir o sacar ingredientes. Que haya postres, bebidas y combos. Que haya un logo hermoso. Una paleta de colores bonita. Que parezca una página web profesional. Que cada vez que una persona realice un pedido, se le de un qr y un número para que se pueda retirar con eso. Que se pueda pedir para delivery, takeaway o entrega en mesa si se pone un numero de mesa. Que el admin pueda crear cupones de descuentos y que el usuario los pueda usar. Que haya una página de inicio donde se pueda ver una introducción al local. Que se pueda cambiar a ingles, español, aleman, frances, o chino. Que se pueda poner modo oscuro o claro. Que sea la mejor página de hamburguesas americanas del mundo. Que haya imágenes sobre cada producto. Y cumplir con la consigna. Crear una base de datos
 
-## Quick start
+# PROMPT 2 EN COPILOT
 
-1. Copy `.env.example` to `.env` and set `DATABASE_URL` for a Postgres instance and `JWT_SECRET`.
+(EXPORTAMOS EL FRONTEND A UN REPOSITORIO, Y LE ADJUNTAMOS LOS 2 CONSIGNAS A COPILOT) Podrias transformar este proyecto sql en un un proyecto con sequelize? este proeycto debe cumplir esta consigna.
 
-2. From the `backend` folder install deps:
+# PROMPT 3 EN COPILOT
 
-```powershell
-cd backend; npm install
-```
-
-3. Create the database (if not exists) and run migrations + seeders:
-
-```powershell
-# using sequelize-cli (included in dev dependencies)
-npm run migrate
-npm run seed
-```
-
-4. Start the server:
-
-```powershell
-npm run dev
-```
-
-The server will run on port specified in `.env` or default 4000.
-
-## Endpoints
-
-- POST /auth/register - register new user (public)
-- POST /auth/login - login to get JWT
-- GET /platos - list all dishes (public)
-- GET /platos/:id - dish details
-- GET /platos/tipo/:tipo - list by type
-- POST /platos - create dish (admin)
-- PUT /platos/:id - update dish (admin)
-- DELETE /platos/:id - delete dish (admin)
-
-- GET /pedidos - list all orders (admin)
-- GET /pedidos/usuario - user orders (authenticated)
-- GET /pedidos/:id - order detail (admin)
-- POST /pedidos - create order (authenticated)
-- PUT /pedidos/:id/aceptar - set accepted (admin)
-- PUT /pedidos/:id/comenzar - set en_camino (admin)
-- PUT /pedidos/:id/entregar - set entregado (admin)
-- DELETE /pedidos/:id - delete order (admin)
-
-## Notes / conventions
-- JWT token lasts 30 minutes.
-- Registration automatically stores `admin: false` and creates a `customer` role.
-- Admin user is seeded by the provided seeders: `admin@burger.dev` / `adminpass`.
-
-If you want me to also add tests, CI config or convert the project into TypeScript — I can continue. 
-
-### Connecting to Neon (hosted Postgres)
-
-If you want to connect to a Neon Postgres instance, set the Neon-supplied credentials in `.env` (never commit secrets to source control). Example using the values you provided:
-
-```dotenv
-PGHOST='ep-damp-paper-acta17wi-pooler.sa-east-1.aws.neon.tech'
+conectar con estos datos de una base de datos de neon: PGHOST='ep-damp-paper-acta17wi-pooler.sa-east-1.aws.neon.tech'
 PGDATABASE='neondb'
 PGUSER='neondb_owner'
 PGPASSWORD='npg_gm0KCvQd2bVB'
-PGPORT=5432
 PGSSLMODE='require'
 PGCHANNELBINDING='require'
 
-DATABASE_URL=postgres://neondb_owner:npg_gm0KCvQd2bVB@ep-damp-paper-acta17wi-pooler.sa-east-1.aws.neon.tech:5432/neondb
-JWT_SECRET=changeme
-PORT=4000
-```
+# PROMPT 4 EN COPILOT
 
-The project config will detect PGSSLMODE and pass TLS settings to Sequelize. To quickly verify the connection locally run:
+ejecutar todo en la termianl, y dejar la pagian andando perfectamente
 
-```powershell
+# PROMPT 5 EN COPILOT
+
+Continua repearando todo para que funcione perfecto
+
+# PROMPT 6 EN COPILOT
+
+ya esta todo funcionanado??
+
+# PROMPT 7 EN COPILOT
+
+porue no anda el frontend?
+
+# PROMPT 8 EN COPILOT
+
+porque falla lo incio sesion? permitir que cualquier usuario cree un usurio, y crear un usuario admin, que se el que tenga accceso a todo lo ue es cupones, logistica de pedidos, creacion de platos y demas
+
+# PROMPT 9 EN COPILOT
+
+conectar todo, y dejar andado a la perfecccion tal y como lo pedi
+
+# PROMPT 10 EN COPILOT
+
+conectar todo y dejar andando, decime como puedo accdeder a a la pagina andando porfavopr
+
+# PROMPT 11 EN COPILOT
+
+Ejecutar frontend y backend. Dejar pagina andado
+
+# Usurarios: 
+
+ADMIN:
+- MAIL: admin@burger.dev 
+- PASSWORD: adminpass 
+
+USER
+- MAIL: 49006614est.ort.edu.ar 
+- PASSWORRD: 12345678
+
+# Terminal backend:
+
 cd backend
-npm run test-connection
-```
+npm install
+npm run migrate
+npm run seed
+npm run dev
+
+# Terminal front
+
+npm install
+npm run dev

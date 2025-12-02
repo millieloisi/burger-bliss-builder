@@ -9,24 +9,47 @@ function generateOrderNumber() {
   return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
 }
 
+// helper to normalize Sequelize order instance(s) to the shape frontend expects
+function normalizeOrder(instance) {
+  if (!instance) return instance;
+  const plain = typeof instance.toJSON === 'function' ? instance.toJSON() : instance;
+  const rawItems = plain.items || plain.order_items || [];
+  const order_items = rawItems.map((it) => {
+    const dish = it.Dish || it.dish || it.dishes || null;
+    return {
+      id: it.id,
+      order_id: it.order_id,
+      dish_id: it.dish_id,
+      cantidad: it.cantidad,
+      precio_unitario: it.precio_unitario,
+      personalizaciones: it.personalizaciones || null,
+      dishes: dish,
+    };
+  });
+  // ensure frontend-friendly key names
+  const out = { ...plain, order_items };
+  if (out.items) delete out.items;
+  return out;
+}
+
 // GET /pedidos - admin: list all
 router.get('/', authenticate, requireAdmin, async (req, res) => {
-  const orders = await Order.findAll({ include: [{ model: OrderItem, as: 'items' }, { model: Profile }] });
-  return res.json(orders);
+  const orders = await Order.findAll({ include: [{ model: OrderItem, as: 'items', include: [{ model: Dish }] }, { model: Profile }] });
+  return res.json(orders.map(normalizeOrder));
 });
 
 // GET /pedidos/usuario - authenticated user orders
 router.get('/usuario', authenticate, async (req, res) => {
   const userId = req.user.id;
   const orders = await Order.findAll({ where: { user_id: userId }, include: [{ model: OrderItem, as: 'items', include: [{ model: Dish }] }] });
-  return res.json(orders);
+  return res.json(orders.map(normalizeOrder));
 });
 
 // GET /pedidos/:id - admin
 router.get('/:id', authenticate, requireAdmin, async (req, res) => {
-  const order = await Order.findByPk(req.params.id, { include: [{ model: OrderItem, as: 'items' }] });
+  const order = await Order.findByPk(req.params.id, { include: [{ model: OrderItem, as: 'items', include: [{ model: Dish }] }, { model: Profile }] });
   if (!order) return res.status(404).json({ message: 'Pedido no encontrado' });
-  return res.json(order);
+  return res.json(normalizeOrder(order));
 });
 
 // POST /pedidos - authenticated creates new order
@@ -71,7 +94,7 @@ router.post('/', authenticate, async (req, res) => {
     // include items and associated dishes for the response
     const result = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items', include: [{ model: Dish }] }, { model: Profile }] });
 
-    return res.status(201).json(result);
+    return res.status(201).json(normalizeOrder(result));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Error al crear pedido' });
